@@ -1,0 +1,11 @@
+body {
+    padding-bottom: 32px;
+}
+.form-control[readonly] {
+    cursor: text;
+}
+.version {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
