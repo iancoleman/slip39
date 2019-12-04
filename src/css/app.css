@@ -9,3 +9,6 @@ body {
     top: 5px;
     right: 5px;
 }
+.generate {
+    cursor: pointer;
+}

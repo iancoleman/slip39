@@ -16,6 +16,75 @@
             <h1>SLIP39 Mnemonic Shares</h1>
             <p class="version">v0.0.1</p>
             <hr>
+            <div id="create" class="row">
+                <div class="col-md-12">
+                    <h2>Create</h2>
+                    <p>
+                        Split an existing secret into several mnemonic shares.
+                    </p>
+                    <p>
+                        <a href="#combine">
+                        See the 'Combine' section below to combine existing shares.
+                        </a>
+                    </p>
+                    <h3>Configuration</h3>
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="master-secret" class="col-sm-2 control-label">
+                                Master Secret
+                            </label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <a class="generate" >Generate</a>
+                                    </span>
+                                    <input id="master-secret" type="text" class="form-control" placeholder="eg MySecretMasterSecret">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="passphrase" class="col-sm-2 control-label">
+                                <a href="https://github.com/satoshilabs/slips/blob/master/slip-0039.md#passphrase">
+                                    Passphrase (optional)
+                                </a>
+                            </label>
+                            <div class="col-sm-10">
+                                <input id="passhprase" type="text" class="form-control" placeholder="eg MySecretPasshprase">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="total-shares" class="col-sm-2 control-label">
+                                Total Shares
+                            </label>
+                            <div class="col-sm-10">
+                                <input id="total-shares" type="number" class="form-control" value="3">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="threshold" class="col-sm-2 control-label">
+                                Threshold
+                            </label>
+                            <div class="col-sm-10">
+                                <input id="threshold" type="number" class="form-control" value="2">
+                                <p class="help-block">
+                                The number of shares needed to reconstruct the master secret.
+                                </p>
+                            </div>
+                        </div>
+                        <h3>Shares</h3>
+                        <div id="new-shares">
+                            <textarea class="form-control" rows="5" placeholder="Shares will be shown here"></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <hr>
+            <div id="combine" class="row">
+                <div class="col-md-12">
+                    <h2>Combine</h2>
+                    <p>Coming soon</p>
+                </div>
+            </div>
         </div>
         <script src="js/slip39-libs.js"></script>
     </body>
