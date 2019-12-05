@@ -306,4 +306,11 @@ it("Allows the user to choose the degree of security when generating master secr
         });
 });
 
+// User can enter mnemonics for reconstruction
+// Encrypted master secrets require passphrase to decrypt
+// Not enough shares shows an error
+// Invalid word in share shows error identifying the invalid word
+// Missing word in share shows mnemonic length error
+// Missing words in share shows checksum error
+
 });

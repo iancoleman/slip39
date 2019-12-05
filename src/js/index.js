@@ -10,12 +10,18 @@
     DOM.masterSecretError = $("#master-secret-error");
     DOM.totalSharesError = $("#total-shares-error");
     DOM.thresholdError = $("#threshold-error");
+    DOM.existingShares = $("#existing-shares");
+    DOM.decrypter = $("#decrypter");
+    DOM.reconstructed = $("#reconstructed");
+    DOM.reconstructedError = $("#reconstructed-error");
 
     DOM.masterSecret.on("input", createShares);
     DOM.passphrase.on("input", createShares);
     DOM.totalShares.on("input", createShares);
     DOM.threshold.on("input", createShares);
     DOM.generate.on("click", generateClicked);
+    DOM.existingShares.on("input", reconstruct);
+    DOM.decrypter.on("input", reconstruct);
 
     DOM.masterSecret.focus();
 
@@ -96,6 +102,32 @@
         DOM.newShares.val(sharesStr.trim());
     }
 
+    function reconstruct() {
+        clearReconstructed();
+        let mnemonicsStr = DOM.existingShares.val();
+        if (mnemonicsStr.length == 0) {
+            return;
+        }
+        let mnemonics = mnemonicsStr.split("\n");
+        let passphrase = DOM.decrypter.val();
+        mnemonics = mnemonics.map(function(m) {
+            return m.trim();
+        });
+        mnemonics = mnemonics.filter(function(m) {
+            return m.length > 0;
+        });
+        let secretHex = "";
+        try {
+            secretHex = slip39libs.slip39.recoverSecret(mnemonics, passphrase);
+        }
+        catch (e) {
+            DOM.reconstructedError.text(e);
+            return;
+        }
+        let secret = secretHex.decodeHex();
+        DOM.reconstructed.val(secret);
+    }
+
     function generateMasterSecret(strengthBits) {
         // TODO test crypto.getRandomValues exists
         // generate secure entropy for the secret
@@ -130,6 +162,11 @@
         DOM.masterSecretError.html("&nbsp;");
         DOM.totalSharesError.addClass("hidden");
         DOM.thresholdError.addClass("hidden");
+    }
+
+    function clearReconstructed() {
+        DOM.reconstructed.val("");
+        DOM.reconstructedError.text("");
     }
 
 })();
