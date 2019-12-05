@@ -89,6 +89,9 @@
         let groups = [];
         // for now only one group.
         // in the future this can be more complex.
+        // Using 1-of-1 member shares because of this error in slip39 lib:
+        // Creating multiple member shares with member threshold 1 is not
+        // allowed. Use 1-of-1 member sharing instead.
         for (let i=0; i<totalShares; i++) {
             groups.push([1,1]);
         }
