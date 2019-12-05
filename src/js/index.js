@@ -48,7 +48,7 @@
         // parse parameters
         let masterSecretHex = DOM.masterSecretHex.val();
         let masterSecretBytes = hexToBytes(masterSecretHex);
-        if (masterSecretBytes.length < 16) {
+        if (masterSecretHex.length < 32) {
             showMasterSecretError("Master Secret must be at least 128 bits (32 hex chars)");
             return;
         }
@@ -63,6 +63,10 @@
         }
         if (totalShares <= 0) {
             showTotalSharesError("Must be at least 1");
+            return;
+        }
+        if (totalShares > 16) {
+            showTotalSharesError("Total shares must be 16 or less");
             return;
         }
         let threshold = parseInt(DOM.threshold.val());
