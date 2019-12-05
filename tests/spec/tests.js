@@ -113,4 +113,17 @@ it('Should load libraries for SLIP39', function(done) {
         });
 });
 
+// TODO User can enter their own master secret
+// TODO Master secret less than 16 chars shows error
+// TODO Master secret with uneven chars shows error
+// TODO Passphrase can be blank
+// TODO Passphrase changes shares
+// TODO Total shares can be set by user
+// TODO Total shares less than 1 shows error
+// TODO Threshold can be set by user
+// TODO Threshold more than total shares shows error
+// TODO Threshold less than 1 shows error
+// TODO User can automatically generate master secret
+// TODO User can choose size of generated master secret
+
 });
