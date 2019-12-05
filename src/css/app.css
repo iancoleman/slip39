@@ -12,3 +12,9 @@ body {
 .generate {
     cursor: pointer;
 }
+.prototype {
+    color: #FF0000;
+    font-weight: bold;
+    text-align: center;
+    padding: 2em;
+}
