@@ -7,12 +7,17 @@
     DOM.threshold = $("#threshold");
     DOM.newShares = $("#new-shares");
     DOM.generate = $(".generate");
+    DOM.masterSecretError = $("#master-secret-error");
+    DOM.totalSharesError = $("#total-shares-error");
+    DOM.thresholdError = $("#threshold-error");
 
     DOM.masterSecret.on("input", createShares);
     DOM.passphrase.on("input", createShares);
     DOM.totalShares.on("input", createShares);
     DOM.threshold.on("input", createShares);
     DOM.generate.on("click", generateClicked);
+
+    DOM.masterSecret.focus();
 
     function generateClicked(e) {
         // get strength value
@@ -36,31 +41,37 @@
         clearShares();
         // parse parameters
         let masterSecret = DOM.masterSecret.val();
-        if (masterSecret.length == 0) {
-            showMasterSecretError();
+        if (masterSecret.length < 16) {
+            let msg = "Master Secret must be at least 16 characters";
+            showMasterSecretError(msg);
+            return;
+        }
+        if (masterSecret.length % 2 != 0) {
+            let msg = "Master Secret must be an even number of characters, try adding one more";
+            showMasterSecretError(msg);
             return;
         }
         let masterSecretHex = masterSecret.encodeHex();
         let totalShares = parseInt(DOM.totalShares.val());
         if (isNaN(totalShares)) {
-            showTotalSharesError();
+            showTotalSharesError("Value must be a number");
             return;
         }
         if (totalShares <= 0) {
-            showThresholdError();
+            showTotalSharesError("Must be at least 1");
             return;
         }
         let threshold = parseInt(DOM.threshold.val());
         if (isNaN(threshold)) {
-            showThresholdError();
+            showThresholdError("Value must be a number");
             return;
         }
         if (threshold > totalShares) {
-            showThresholdError();
+            showThresholdError("Must be less than or equal to total shares");
             return;
         }
         if (threshold <= 0) {
-            showThresholdError();
+            showThresholdError("Must be greater than 1");
             return;
         }
         let groups = [];
@@ -99,20 +110,26 @@
         return masterSecret;
     }
 
-    function showMasterSecretError() {
-        // TODO
+    function showMasterSecretError(msg) {
+        DOM.masterSecretError.text(msg);
+        DOM.masterSecretError.removeClass("hidden");
     }
 
-    function showTotalSharesError() {
-        // TODO
+    function showTotalSharesError(msg) {
+        DOM.totalSharesError.text(msg);
+        DOM.totalSharesError.removeClass("hidden");
     }
 
-    function showThresholdError() {
-        // TODO
+    function showThresholdError(msg) {
+        DOM.thresholdError.text(msg);
+        DOM.thresholdError.removeClass("hidden");
     }
 
     function clearShares() {
         DOM.newShares.val("");
+        DOM.masterSecretError.html("&nbsp;");
+        DOM.totalSharesError.addClass("hidden");
+        DOM.thresholdError.addClass("hidden");
     }
 
 })();
