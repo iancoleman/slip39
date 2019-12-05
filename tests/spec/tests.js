@@ -87,6 +87,39 @@ let customMatchers = {
     },
 }
 
+// Helper functions
+
+function testMofN(done, m, n) {
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
+    driver.findElement(By.css("#total-shares"))
+        .clear();
+    driver.findElement(By.css("#total-shares"))
+        .sendKeys(n.toString());
+    driver.findElement(By.css("#threshold"))
+        .clear();
+    driver.findElement(By.css("#threshold"))
+        .sendKeys(m.toString());
+    driver.findElement(By.css("#new-shares"))
+        .getAttribute("value")
+        .then(function(shares) {
+            expect(shares).toBeAMnemonic();
+            // try to combine m shares
+            let sharesArr = shares.split("\n\n");
+            let mShares = "";
+            for (let i=0; i<m; i++) {
+                mShares += sharesArr[i] + "\n\n";
+            }
+            driver.findElement(By.css("#existing-shares"))
+                .sendKeys(mShares);
+            driver.findElement(By.css("#reconstructed-hex"))
+                .getAttribute("value")
+                .then(function(masterSecret) {
+                    expect(masterSecret).toBe("abcdef0123456789abcdef0123456789");
+                    done();
+                });
+        });
+}
 
 // Tests
 
@@ -428,11 +461,30 @@ it("Should not allow total shares to be greater than 16", function(done) {
             done();
         });
 });
-// TODO check 1-of-1 shares can be generated and reconstructed
-// TODO check 1-of-16 shares can be generated and reconstructed
-// TODO check 16-of-16 shares can be generated and reconstructed
-// TODO Check 15-of-16 shares can be generated and reconstructed
-// TODO check 2-of-2 shares can be generated and reconstructed
+// check m-of-n shares can be generated and reconstructed
+// boundary cases and potentially unusual situations
+it("Allows 1-of-1 shares", function(done) {
+    testMofN(done, 1, 1);
+});
+it("Allows 2-of-2 shares", function(done) {
+    testMofN(done, 2, 2);
+});
+it("Allows 14-of-15 shares", function(done) {
+    testMofN(done, 14, 15);
+});
+it("Allows 15-of-15 shares", function(done) {
+    testMofN(done, 15, 15);
+});
+it("Allows 1-of-16 shares", function(done) {
+    testMofN(done, 1, 16);
+});
+it("Allows 15-of-16 shares", function(done) {
+    testMofN(done, 15, 16);
+});
+it("Allows 16-of-16 shares", function(done) {
+    testMofN(done, 16, 16);
+});
+
 // TODO check it works with SLIP39 test vectors
 
 });
