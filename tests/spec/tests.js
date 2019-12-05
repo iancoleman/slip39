@@ -413,7 +413,21 @@ it("Shows an error if there is a missing word in a share", function(done) {
         });
 });
 
-// TODO Trying to generate more than 16 shares shows an error
+// Trying to generate more than 16 shares shows an error
+it("Should not allow total shares to be greater than 16", function(done) {
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
+    driver.findElement(By.css("#total-shares"))
+        .clear();
+    driver.findElement(By.css("#total-shares"))
+        .sendKeys("17");
+    driver.findElement(By.css("#total-shares-error"))
+        .getText()
+        .then(function(text) {
+            expect(text).toBe("Total shares must be 16 or less");
+            done();
+        });
+});
 // TODO check 1-of-1 shares can be generated and reconstructed
 // TODO check 1-of-16 shares can be generated and reconstructed
 // TODO check 16-of-16 shares can be generated and reconstructed
