@@ -490,6 +490,22 @@ it("Allows 16-of-16 shares", function(done) {
     testMofN(done, 16, 16);
 });
 
-// TODO check it works with SLIP39 test vectors
+// check it works with SLIP39 test vectors.
+// only check the first one since it's a UI thing rather than a coverage thing
+// and if the first one works the rest of the original test vectors are covered
+// by the slip39 library.
+it("Passes slip39 test vectors", function(done) {
+    let share = "duckling enlarge academic academic agency result length solution fridge kidney coal piece deal husband erode duke ajar critical decision keyboard";
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(share);
+    driver.findElement(By.css("#decrypter"))
+        .sendKeys("TREZOR");
+    driver.findElement(By.css("#reconstructed-hex"))
+        .getAttribute("value")
+        .then(function(masterSecret) {
+            expect(masterSecret).toBe("bb54aac4b89dc868ba37d9cc21b2cece");
+            done();
+        });
+});
 
 });
