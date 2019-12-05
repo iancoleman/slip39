@@ -1,7 +1,7 @@
 (function() {
 
     let DOM = {};
-    DOM.masterSecret = $("#master-secret");
+    DOM.masterSecretHex = $("#master-secret-hex");
     DOM.passphrase = $("#passphrase");
     DOM.totalShares = $("#total-shares");
     DOM.threshold = $("#threshold");
@@ -12,10 +12,10 @@
     DOM.thresholdError = $("#threshold-error");
     DOM.existingShares = $("#existing-shares");
     DOM.decrypter = $("#decrypter");
-    DOM.reconstructed = $("#reconstructed");
+    DOM.reconstructedHex = $("#reconstructed-hex");
     DOM.reconstructedError = $("#reconstructed-error");
 
-    DOM.masterSecret.on("input", createShares);
+    DOM.masterSecretHex.on("input", createShares);
     DOM.passphrase.on("input", createShares);
     DOM.totalShares.on("input", createShares);
     DOM.threshold.on("input", createShares);
@@ -23,7 +23,7 @@
     DOM.existingShares.on("input", reconstruct);
     DOM.decrypter.on("input", reconstruct);
 
-    DOM.masterSecret.focus();
+    DOM.masterSecretHex.focus();
 
     function generateClicked(e) {
         // get strength value
@@ -37,8 +37,8 @@
             // TODO
         }
         // generate master secret
-        let masterSecret = generateMasterSecret(strength);
-        DOM.masterSecret.val(masterSecret);
+        let masterSecretHex = generateMasterSecret(strength);
+        DOM.masterSecretHex.val(masterSecretHex);
         createShares();
 
     }
@@ -46,18 +46,16 @@
     function createShares() {
         clearShares();
         // parse parameters
-        let masterSecret = DOM.masterSecret.val();
-        if (masterSecret.length < 16) {
-            let msg = "Master Secret must be at least 16 characters";
-            showMasterSecretError(msg);
+        let masterSecretHex = DOM.masterSecretHex.val();
+        let masterSecretBytes = hexToBytes(masterSecretHex);
+        if (masterSecretBytes.length < 16) {
+            showMasterSecretError("Master Secret must be at least 128 bits (32 hex chars)");
             return;
         }
-        if (masterSecret.length % 2 != 0) {
-            let msg = "Master Secret must be an even number of characters, try adding one more";
-            showMasterSecretError(msg);
+        if (masterSecretBytes.length % 2 != 0) {
+            showMasterSecretError("Master Secret must be an even number of bytes (multiples of 4 hex chars)");
             return;
         }
-        let masterSecretHex = masterSecret.encodeHex();
         let totalShares = parseInt(DOM.totalShares.val());
         if (isNaN(totalShares)) {
             showTotalSharesError("Value must be a number");
@@ -88,7 +86,7 @@
         }
         // create shares
         let slip = slip39libs.slip39.fromArray(
-            masterSecretHex, {
+            masterSecretBytes, {
             passphrase: DOM.passphrase.val(),
             threshold: threshold,
             groups: groups,
@@ -116,16 +114,17 @@
         mnemonics = mnemonics.filter(function(m) {
             return m.length > 0;
         });
-        let secretHex = "";
+        let secretBytes = "";
         try {
-            secretHex = slip39libs.slip39.recoverSecret(mnemonics, passphrase);
+            secretBytes = slip39libs.slip39.recoverSecret(mnemonics, passphrase);
         }
         catch (e) {
+            // TODO modify error text and make it easier for users
             DOM.reconstructedError.text(e);
             return;
         }
-        let secret = secretHex.decodeHex();
-        DOM.reconstructed.val(secret);
+        let secretHex = bytesToHex(secretBytes);
+        DOM.reconstructedHex.val(secretHex);
     }
 
     function generateMasterSecret(strengthBits) {
@@ -134,11 +133,7 @@
         let buffer = new Uint8Array(strengthBits / 8);
         let data = crypto.getRandomValues(buffer);
         // fill the masterSecret value
-        let arr = [];
-        for (let i=0; i<data.length; i++) {
-            arr[i] = data[i];
-        }
-        let masterSecret = arr.toHexString();
+        let masterSecret = bytesToHex(data);
         return masterSecret;
     }
 
@@ -165,8 +160,34 @@
     }
 
     function clearReconstructed() {
-        DOM.reconstructed.val("");
-        DOM.reconstructedError.text("");
+        DOM.reconstructedHex.val("");
+        DOM.reconstructedError.html("&nbsp;");
+    }
+
+    function bytesToHex(u8) {
+        let h = "";
+        for (i=0; i<u8.length; i++) {
+            hexChars = u8[i].toString(16);
+            while (hexChars.length % 2 != 0) {
+                hexChars = "0" + hexChars;
+            }
+            h += hexChars;
+        }
+        return h;
+    }
+
+    function hexToBytes(h) {
+        // Is left padding suitable here?
+        if (h.length % 2 != 0) {
+            h = "0" + h;
+        }
+        // create bytes
+        let a = [];
+        for (i=0; i<h.length; i+=2) {
+            let b = parseInt(h.substring(i, i+2), 16)
+            a.push(b);
+        }
+        return a;
     }
 
 })();

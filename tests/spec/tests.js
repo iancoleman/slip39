@@ -132,8 +132,8 @@ it("Should load libraries for SLIP39", function(done) {
 
 // User can enter their own master secret
 it("Should allow users to enter their own master secret", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("ABCDEFGHIJKLMNOP");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#new-shares"))
         .getAttribute("value")
         .then(function(value) {
@@ -143,33 +143,33 @@ it("Should allow users to enter their own master secret", function(done) {
 });
 
 // Master secret less than 16 chars shows error
-it("Should show error for master secret less than 16 chars", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("too short");
+it("Should show error for master secret less than 128 bits", function(done) {
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); // 31 hex chars, needs 32
     driver.findElement(By.css("#master-secret-error"))
         .getText()
         .then(function(text) {
-            expect(text).toBe("Master Secret must be at least 16 characters");
+            expect(text).toBe("Master Secret must be at least 128 bits (32 hex chars)");
             done();
         });
 });
 
 // Master secret with uneven chars shows error
 it("Should show error for master secret with odd number of characters", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234odd");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789a");
     driver.findElement(By.css("#master-secret-error"))
         .getText()
         .then(function(text) {
-            expect(text).toBe("Master Secret must be an even number of characters, try adding one more");
+            expect(text).toBe("Master Secret must be an even number of bytes (multiples of 4 hex chars)");
             done();
         });
 });
 
 // Passphrase can be blank
 it("Should show allow blank passphrase", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#passphrase"))
         .clear();
     driver.findElement(By.css("#new-shares"))
@@ -182,8 +182,8 @@ it("Should show allow blank passphrase", function(done) {
 
 // Passphrase changes shares
 it("Should show allow custom passphrase", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#passphrase"))
         .clear();
     driver.findElement(By.css("#new-shares"))
@@ -202,8 +202,8 @@ it("Should show allow custom passphrase", function(done) {
 
 // Total shares can be set by user
 it("Should allow total shares to be set by the user", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#total-shares"))
         .clear();
     driver.findElement(By.css("#total-shares"))
@@ -219,8 +219,8 @@ it("Should allow total shares to be set by the user", function(done) {
 
 // Total shares less than 1 shows error
 it("Should show an error if total shares is less than 1", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#total-shares"))
         .clear();
     driver.findElement(By.css("#total-shares"))
@@ -235,8 +235,8 @@ it("Should show an error if total shares is less than 1", function(done) {
 
 // Threshold can be set by user
 it("Should allow user to set a threshold value", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#threshold"))
         .clear();
     driver.findElement(By.css("#threshold"))
@@ -252,8 +252,8 @@ it("Should allow user to set a threshold value", function(done) {
 
 // Threshold more than total shares shows error
 it("Should show an error if threshold is more than total shares", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#threshold"))
         .clear();
     driver.findElement(By.css("#threshold"))
@@ -268,8 +268,8 @@ it("Should show an error if threshold is more than total shares", function(done)
 
 // Threshold less than 1 shows error
 it("Should show an error if threshold is less than 1", function(done) {
-    driver.findElement(By.css("#master-secret"))
-        .sendKeys("abcd1234abcd1234");
+    driver.findElement(By.css("#master-secret-hex"))
+        .sendKeys("abcdef0123456789abcdef0123456789");
     driver.findElement(By.css("#threshold"))
         .clear();
     driver.findElement(By.css("#threshold"))
@@ -286,7 +286,7 @@ it("Should show an error if threshold is less than 1", function(done) {
 it("Allows the user to automatically generate a master secret", function(done) {
     driver.findElement(By.css(".generate:nth-of-type(1)"))
         .click();
-    driver.findElement(By.css("#master-secret"))
+    driver.findElement(By.css("#master-secret-hex"))
         .getAttribute("value")
         .then(function(masterSecret) {
             expect(masterSecret.length).toBe(32);
@@ -298,7 +298,7 @@ it("Allows the user to automatically generate a master secret", function(done) {
 it("Allows the user to choose the degree of security when generating master secrets", function(done) {
     driver.findElement(By.css(".generate:nth-of-type(2)"))
         .click();
-    driver.findElement(By.css("#master-secret"))
+    driver.findElement(By.css("#master-secret-hex"))
         .getAttribute("value")
         .then(function(masterSecret) {
             expect(masterSecret.length).toBe(40);
@@ -309,15 +309,15 @@ it("Allows the user to choose the degree of security when generating master secr
 // User can enter mnemonics for reconstruction
 it("Allows the user to reconstruct a master secret from mnemonics", function(done) {
     let shares = [
-        "loan senior acrobat leader busy apart survive exclude avoid imply ordinary various square timely skin champion craft triumph vanish total",
-        "loan senior beard leader cylinder exceed both slush cinema require method expand furl impulse afraid insect impact zero aunt founder",
+        "work taught acrobat leader activity tactics column similar herald much justice coal silver wildlife military august scared thunder acquire rocky",
+        "work taught beard leader crunch standard moisture river expect patent obesity theory adult usual ambition huge problem charity type chew",
     ].join("\n");
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(shares);
-    driver.findElement(By.css("#reconstructed"))
+    driver.findElement(By.css("#reconstructed-hex"))
         .getAttribute("value")
         .then(function(masterSecret) {
-            expect(masterSecret).toBe("abcd1234abcd1234");
+            expect(masterSecret).toBe("abcdef0123456789abcdef0123456789");
             done();
         });
 });
@@ -325,18 +325,18 @@ it("Allows the user to reconstruct a master secret from mnemonics", function(don
 // Encrypted master secrets require passphrase to decrypt
 it("Requires a master secret for reconstructing encrypted master secrets", function(done) {
     let shares = [
-        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
-        "flip merchant beard leader briefing loan scroll dish level license merit drink failure rival legal distance that timely depart device",
+        "losing extend acrobat leader duckling true profile spend advocate evening obesity forecast wrap genius false prayer cargo medical bulb enjoy",
+        "losing extend beard leader dragon fitness rebuild drink guitar laden august math example ceiling coastal legal nylon senior observe alarm",
     ].join("\n");
     let passphrase = "z";
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(shares);
     driver.findElement(By.css("#decrypter"))
         .sendKeys(passphrase);
-    driver.findElement(By.css("#reconstructed"))
+    driver.findElement(By.css("#reconstructed-hex"))
         .getAttribute("value")
         .then(function(masterSecret) {
-            expect(masterSecret).toBe("abcd1234abcd1234");
+            expect(masterSecret).toBe("abcdef0123456789abcdef0123456789");
             done();
         });
 });
@@ -344,18 +344,18 @@ it("Requires a master secret for reconstructing encrypted master secrets", funct
 // Incorrect passphrase decrypts to incorrect master secret
 it("Allows decryption with incorrect passhprase but to different master secret", function(done) {
     let shares = [
-        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
-        "flip merchant beard leader briefing loan scroll dish level license merit drink failure rival legal distance that timely depart device",
+        "losing extend acrobat leader duckling true profile spend advocate evening obesity forecast wrap genius false prayer cargo medical bulb enjoy",
+        "losing extend beard leader dragon fitness rebuild drink guitar laden august math example ceiling coastal legal nylon senior observe alarm",
     ].join("\n");
     let passphrase = "incorrect passphrase";
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(shares);
     driver.findElement(By.css("#decrypter"))
         .sendKeys(passphrase);
-    driver.findElement(By.css("#reconstructed"))
+    driver.findElement(By.css("#reconstructed-hex"))
         .getAttribute("value")
         .then(function(masterSecret) {
-            expect(masterSecret).not.toBe("abcd1234abcd1234");
+            expect(masterSecret).not.toBe("abcdef0123456789abcdef0123456789");
             done();
         });
 });
@@ -363,7 +363,7 @@ it("Allows decryption with incorrect passhprase but to different master secret",
 // Not enough shares shows an error
 it("Shows an error if not enough shares are provided during reconstruction", function(done) {
     let shares = [
-        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
+        "losing extend acrobat leader duckling true profile spend advocate evening obesity forecast wrap genius false prayer cargo medical bulb enjoy",
     ].join("\n");
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(shares);
@@ -389,7 +389,7 @@ it("Shows an error if there are invalid words in a share", function(done) {
 
 // Missing word in share shows mnemonic length error
 it("Shows an error if there is a missing word in a share", function(done) {
-    let share = "fake easy acrobat leader mustang work daughter criminal taxi regular width closet holiday arcade violence chubby shaped priority python apart plot"; // missing last word 'coding ocean'
+    let share = "response senior acrobat leader scholar gather mule fridge chubby facility hesitate burning depict fiscal drift dominant miracle ancient thunder owner carve"; // missing last words 'edge drink'
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(share);
     driver.findElement(By.css("#reconstructed-error"))
@@ -402,7 +402,7 @@ it("Shows an error if there is a missing word in a share", function(done) {
 
 // Missing words in share shows checksum error
 it("Shows an error if there is a missing word in a share", function(done) {
-    let share = "fake easy acrobat leader mustang work daughter criminal taxi regular width closet holiday arcade violence chubby shaped priority python apart plot coding"; // missing last word 'ocean'
+    let share = "response senior acrobat leader scholar gather mule fridge chubby facility hesitate burning depict fiscal drift dominant miracle ancient thunder owner carve edge"; // missing last word 'drink'
     driver.findElement(By.css("#existing-shares"))
         .sendKeys(share);
     driver.findElement(By.css("#reconstructed-error"))
