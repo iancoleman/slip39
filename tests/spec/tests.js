@@ -307,10 +307,118 @@ it("Allows the user to choose the degree of security when generating master secr
 });
 
 // User can enter mnemonics for reconstruction
+it("Allows the user to reconstruct a master secret from mnemonics", function(done) {
+    let shares = [
+        "loan senior acrobat leader busy apart survive exclude avoid imply ordinary various square timely skin champion craft triumph vanish total",
+        "loan senior beard leader cylinder exceed both slush cinema require method expand furl impulse afraid insect impact zero aunt founder",
+    ].join("\n");
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(shares);
+    driver.findElement(By.css("#reconstructed"))
+        .getAttribute("value")
+        .then(function(masterSecret) {
+            expect(masterSecret).toBe("abcd1234abcd1234");
+            done();
+        });
+});
+
 // Encrypted master secrets require passphrase to decrypt
+it("Requires a master secret for reconstructing encrypted master secrets", function(done) {
+    let shares = [
+        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
+        "flip merchant beard leader briefing loan scroll dish level license merit drink failure rival legal distance that timely depart device",
+    ].join("\n");
+    let passphrase = "z";
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(shares);
+    driver.findElement(By.css("#decrypter"))
+        .sendKeys(passphrase);
+    driver.findElement(By.css("#reconstructed"))
+        .getAttribute("value")
+        .then(function(masterSecret) {
+            expect(masterSecret).toBe("abcd1234abcd1234");
+            done();
+        });
+});
+
+// Incorrect passphrase decrypts to incorrect master secret
+it("Allows decryption with incorrect passhprase but to different master secret", function(done) {
+    let shares = [
+        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
+        "flip merchant beard leader briefing loan scroll dish level license merit drink failure rival legal distance that timely depart device",
+    ].join("\n");
+    let passphrase = "incorrect passphrase";
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(shares);
+    driver.findElement(By.css("#decrypter"))
+        .sendKeys(passphrase);
+    driver.findElement(By.css("#reconstructed"))
+        .getAttribute("value")
+        .then(function(masterSecret) {
+            expect(masterSecret).not.toBe("abcd1234abcd1234");
+            done();
+        });
+});
+
 // Not enough shares shows an error
+it("Shows an error if not enough shares are provided during reconstruction", function(done) {
+    let shares = [
+        "flip merchant acrobat leader dress hormone clock client decorate estimate hospital forward spirit recall shrimp mama duckling wits beard blanket",
+    ].join("\n");
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(shares);
+    driver.findElement(By.css("#reconstructed-error"))
+        .getText()
+        .then(function(error) {
+            expect(error).toBe("Error: Insufficient number of mnemonic groups (undefined). The required number of groups is 2.");
+            done();
+        });
+});
+
 // Invalid word in share shows error identifying the invalid word
+it("Shows an error if there are invalid words in a share", function(done) {
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys("invalidword");
+    driver.findElement(By.css("#reconstructed-error"))
+        .getText()
+        .then(function(error) {
+            expect(error).toBe("Error: Invalid mnemonic word invalidword.");
+            done();
+        });
+});
+
 // Missing word in share shows mnemonic length error
+it("Shows an error if there is a missing word in a share", function(done) {
+    let share = "fake easy acrobat leader mustang work daughter criminal taxi regular width closet holiday arcade violence chubby shaped priority python apart plot"; // missing last word 'coding ocean'
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(share);
+    driver.findElement(By.css("#reconstructed-error"))
+        .getText()
+        .then(function(error) {
+            expect(error).toBe("Error: Invalid mnemonic length.");
+            done();
+        });
+});
+
 // Missing words in share shows checksum error
+it("Shows an error if there is a missing word in a share", function(done) {
+    let share = "fake easy acrobat leader mustang work daughter criminal taxi regular width closet holiday arcade violence chubby shaped priority python apart plot coding"; // missing last word 'ocean'
+    driver.findElement(By.css("#existing-shares"))
+        .sendKeys(share);
+    driver.findElement(By.css("#reconstructed-error"))
+        .getText()
+        .then(function(error) {
+            expect(error).toBe("Error: Invalid mnemonic checksum");
+            done();
+        });
+});
+
+// TODO Trying to generate more than 16 shares shows an error
+// TODO check 1-of-1 shares can be generated and reconstructed
+// TODO check 1-of-16 shares can be generated and reconstructed
+// TODO check 16-of-16 shares can be generated and reconstructed
+// TODO Check 15-of-16 shares can be generated and reconstructed
+// TODO check 2-of-2 shares can be generated and reconstructed
+// TODO check it works with SLIP39 test vectors
 
 });
