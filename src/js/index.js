@@ -1,5 +1,9 @@
 (function() {
 
+    // should be 16 but some issues with 16 shares, giving
+    // Error: Invalid digest of the shared secret.
+    let MAX_SHARES = 10;
+
     let DOM = {};
     DOM.masterSecretHex = $("#master-secret-hex");
     DOM.passphrase = $("#passphrase");
@@ -65,8 +69,8 @@
             showTotalSharesError("Must be at least 1");
             return;
         }
-        if (totalShares > 16) {
-            showTotalSharesError("Total shares must be 16 or less");
+        if (totalShares > MAX_SHARES) {
+            showTotalSharesError("Total shares must be " + MAX_SHARES + " or less");
             return;
         }
         let threshold = parseInt(DOM.threshold.val());
