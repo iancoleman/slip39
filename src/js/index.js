@@ -2,7 +2,7 @@
 
     // should be 16 but some issues with 16 shares, giving
     // Error: Invalid digest of the shared secret.
-    let MAX_SHARES = 10;
+    let MAX_SHARES = 16;
 
     let DOM = {};
     DOM.masterSecretHex = $("#master-secret-hex");

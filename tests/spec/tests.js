@@ -457,7 +457,7 @@ it("Should not allow total shares to be greater than 16", function(done) {
     driver.findElement(By.css("#total-shares-error"))
         .getText()
         .then(function(text) {
-            expect(text).toBe("Total shares must be 10 or less");
+            expect(text).toBe("Total shares must be 16 or less");
             done();
         });
 });
@@ -470,23 +470,18 @@ it("Allows 2-of-2 shares", function(done) {
     testMofN(done, 2, 2);
 });
 it("Allows 14-of-15 shares", function(done) {
-    pending("Pending fix to many shares");
     testMofN(done, 14, 15);
 });
 it("Allows 15-of-15 shares", function(done) {
-    pending("Pending fix to many shares");
     testMofN(done, 15, 15);
 });
 it("Allows 1-of-16 shares", function(done) {
-    pending("Pending fix to many shares");
     testMofN(done, 1, 16);
 });
 it("Allows 15-of-16 shares", function(done) {
-    pending("Pending fix to many shares");
     testMofN(done, 15, 16);
 });
 it("Allows 16-of-16 shares", function(done) {
-    pending("Pending fix to many shares");
     testMofN(done, 16, 16);
 });
 
