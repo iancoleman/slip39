@@ -403,7 +403,7 @@ it("Shows an error if not enough shares are provided during reconstruction", fun
     driver.findElement(By.css("#reconstructed-error"))
         .getText()
         .then(function(error) {
-            expect(error).toBe("Error: Insufficient number of mnemonic groups (undefined). The required number of groups is 2.");
+            expect(error).toBe("Error: Insufficient number of mnemonic groups (1). The required number of groups is 2.");
             done();
         });
 });
