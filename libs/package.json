@@ -5,7 +5,7 @@
     "build": "browserify libs.js --standalone slip39libs > ../src/js/slip39-libs.js"
   },
   "dependencies": {
-    "slip39": "0.1.6"
+    "slip39": "0.1.7"
   },
   "devDependencies": {
     "browserify": "^16.2.3"

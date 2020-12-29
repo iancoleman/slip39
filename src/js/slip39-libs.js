@@ -13223,11 +13223,24 @@ function getLength(buf, p) {
     return initial;
   }
   var octetLen = initial & 0xf;
+
+  // Indefinite length or overflow
+  if (octetLen === 0 || octetLen > 4) {
+    return false;
+  }
+
   var val = 0;
   for (var i = 0, off = p.place; i < octetLen; i++, off++) {
     val <<= 8;
     val |= buf[off];
+    val >>>= 0;
   }
+
+  // Leading zeroes
+  if (val <= 0x7f) {
+    return false;
+  }
+
   p.place = off;
   return val;
 }
@@ -13251,6 +13264,9 @@ Signature.prototype._importDER = function _importDER(data, enc) {
     return false;
   }
   var len = getLength(data, p);
+  if (len === false) {
+    return false;
+  }
   if ((len + p.place) !== data.length) {
     return false;
   }
@@ -13258,21 +13274,37 @@ Signature.prototype._importDER = function _importDER(data, enc) {
     return false;
   }
   var rlen = getLength(data, p);
+  if (rlen === false) {
+    return false;
+  }
   var r = data.slice(p.place, rlen + p.place);
   p.place += rlen;
   if (data[p.place++] !== 0x02) {
     return false;
   }
   var slen = getLength(data, p);
+  if (slen === false) {
+    return false;
+  }
   if (data.length !== slen + p.place) {
     return false;
   }
   var s = data.slice(p.place, slen + p.place);
-  if (r[0] === 0 && (r[1] & 0x80)) {
-    r = r.slice(1);
+  if (r[0] === 0) {
+    if (r[1] & 0x80) {
+      r = r.slice(1);
+    } else {
+      // Leading zeroes
+      return false;
+    }
   }
-  if (s[0] === 0 && (s[1] & 0x80)) {
-    s = s.slice(1);
+  if (s[0] === 0) {
+    if (s[1] & 0x80) {
+      s = s.slice(1);
+    } else {
+      // Leading zeroes
+      return false;
+    }
   }
 
   this.r = new BN(r);
@@ -14513,29 +14545,29 @@ utils.intFromLE = intFromLE;
 
 },{"bn.js":17,"minimalistic-assert":105,"minimalistic-crypto-utils":106}],82:[function(require,module,exports){
 module.exports={
-  "_from": "elliptic@^6.0.0",
-  "_id": "elliptic@6.5.2",
+  "_from": "elliptic@6.5.3",
+  "_id": "elliptic@6.5.3",
   "_inBundle": false,
-  "_integrity": "sha512-f4x70okzZbIQl/NSRLkI/+tteV/9WqL98zx+SQ69KbXxmVrmjwsNUPn/gYJJ0sHvEak24cZgHIPegRePAtA/xw==",
+  "_integrity": "sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==",
   "_location": "/elliptic",
   "_phantomChildren": {},
   "_requested": {
-    "type": "range",
+    "type": "version",
     "registry": true,
-    "raw": "elliptic@^6.0.0",
+    "raw": "elliptic@6.5.3",
     "name": "elliptic",
     "escapedName": "elliptic",
-    "rawSpec": "^6.0.0",
+    "rawSpec": "6.5.3",
     "saveSpec": null,
-    "fetchSpec": "^6.0.0"
+    "fetchSpec": "6.5.3"
   },
   "_requiredBy": [
     "/browserify-sign",
     "/create-ecdh"
   ],
-  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.2.tgz",
-  "_shasum": "05c5678d7173c049d8ca433552224a495d0e3762",
-  "_spec": "elliptic@^6.0.0",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.3.tgz",
+  "_shasum": "cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6",
+  "_spec": "elliptic@6.5.3",
   "_where": "/home/ian/git/bitcoin/slip39/libs/node_modules/browserify-sign",
   "author": {
     "name": "Fedor Indutny",
@@ -14597,7 +14629,7 @@ module.exports={
     "unit": "istanbul test _mocha --reporter=spec test/index.js",
     "version": "grunt dist && git add dist/"
   },
-  "version": "6.5.2"
+  "version": "6.5.3"
 }
 
 },{}],83:[function(require,module,exports){
@@ -22079,13 +22111,16 @@ const slipHelper = require('./slip39_helper.js');
 
 const MAX_DEPTH = 2;
 
-//
-// Slip39Node
-//
+/**
+ * Slip39Node
+ * For root node, description refers to the whole set's title e.g. "Hardware wallet X SSSS shares"
+ * For children nodes, description refers to the group e.g. "Family group: mom, dad, sister, wife"
+ */
 class Slip39Node {
-  constructor(index = 0, mnemonic = '', children = []) {
-    this.mnemonic = mnemonic;
+  constructor(index = 0, description = '', mnemonic = '', children = []) {
     this.index = index;
+    this.description = description;
+    this.mnemonic = mnemonic;
     this.children = children;
   }
 
@@ -22121,9 +22156,10 @@ class Slip39 {
     passphrase = '',
     threshold = 1,
     groups = [
-      [1, 1]
+      [1, 1, 'Default 1-of-1 group share']
     ],
-    iterationExponent = 0
+    iterationExponent = 0,
+    title = 'My default slip39 shares'
   } = {}) {
     if (masterSecret.length * 8 < slipHelper.MIN_ENTROPY_BITS) {
       throw Error(`The length of the master secret (${masterSecret.length} bytes) must be at least ${slipHelper.bitsToBytes(slipHelper.MIN_ENTROPY_BITS)} bytes.`);
@@ -22156,13 +22192,13 @@ class Slip39 {
       groupThreshold: threshold
     });
 
-    const ems = slipHelper.crypt(
+    const encryptedMasterSecret = slipHelper.crypt(
       masterSecret, passphrase, iterationExponent, slip.identifier);
 
     const root = slip.buildRecursive(
-      new Slip39Node(),
+      new Slip39Node(0, title),
       groups,
-      ems,
+      encryptedMasterSecret,
       threshold
     );
 
@@ -22170,14 +22206,14 @@ class Slip39 {
     return slip;
   }
 
-  buildRecursive(current, nodes, secret, threshold, index) {
+  buildRecursive(currentNode, nodes, secret, threshold, index) {
     // It means it's a leaf.
     if (nodes.length === 0) {
       const mnemonic = slipHelper.encodeMnemonic(this.identifier, this.iterationExponent, index,
-        this.groupThreshold, this.groupCount, current.index, threshold, secret);
+        this.groupThreshold, this.groupCount, currentNode.index, threshold, secret);
 
-      current.mnemonic = mnemonic;
-      return current;
+      currentNode.mnemonic = mnemonic;
+      return currentNode;
     }
 
     const secretShares = slipHelper.splitSecret(threshold, nodes.length, secret);
@@ -22189,23 +22225,25 @@ class Slip39 {
       const n = item[0];
       // m=members
       const m = item[1];
+      // d=description
+      const d = item[2] || '';
 
-      // Genereate leaf members, means their `m` is `0`
-      const members = Array().generate(m, () => [n, 0]);
+      // Generate leaf members, means their `m` is `0`
+      const members = Array().slip39Generate(m, () => [n, 0, d]);
 
-      const node = new Slip39Node(idx);
+      const node = new Slip39Node(idx, d);
       const branch = this.buildRecursive(
         node,
         members,
         secretShares[idx],
         n,
-        current.index);
+        currentNode.index);
 
       children = children.concat(branch);
       idx = idx + 1;
     });
-    current.children = children;
-    return current;
+    currentNode.children = children;
+    return currentNode;
   }
 
   static recoverSecret(mnemonics, passphrase) {
@@ -22324,7 +22362,7 @@ const SECRET_INDEX = 255;
 //
 // Helper functions for SLIP39 implementation.
 //
-String.prototype.encodeHex = function () {
+String.prototype.slip39EncodeHex = function () {
   let bytes = [];
   for (let i = 0; i < this.length; ++i) {
     bytes.push(this.charCodeAt(i));
@@ -22332,7 +22370,7 @@ String.prototype.encodeHex = function () {
   return bytes;
 };
 
-Array.prototype.decodeHex = function () {
+Array.prototype.slip39DecodeHex = function () {
   let str = [];
   const hex = this.toString().split(',');
   for (let i = 0; i < hex.length; i++) {
@@ -22341,10 +22379,10 @@ Array.prototype.decodeHex = function () {
   return str.toString().replace(/,/g, '');
 };
 
-Array.prototype.generate = function (n, v) {
-  let m = n || this.length;
-  for (let i = 0; i < m; i++) {
-    this[i] = typeof v === 'undefined' ? i : v(i);
+Array.prototype.slip39Generate = function (m, v = _ => _) {
+  let n = m || this.length;
+  for (let i = 0; i < n; i++) {
+    this[i] = v(i);
   }
   return this;
 };
@@ -22440,11 +22478,11 @@ function crypt(masterSecret, passphrase, iterationExponent,
   let IL = masterSecret.slice().slice(0, masterSecret.length / 2);
   let IR = masterSecret.slice().slice(masterSecret.length / 2);
 
-  const pwd = passphrase.encodeHex();
+  const pwd = passphrase.slip39EncodeHex();
 
   const salt = getSalt(identifier);
 
-  let range = Array().generate(ROUND_COUNT);
+  let range = Array().slip39Generate(ROUND_COUNT);
   range = encrypt ? range : range.reverse();
 
   range.forEach((round) => {
@@ -22480,7 +22518,7 @@ function splitSecret(threshold, shareCount, sharedSecret) {
   }
   //  If the threshold is 1, then the digest of the shared secret is not used.
   if (threshold === 1) {
-    return Array().generate(shareCount, () => sharedSecret);
+    return Array().slip39Generate(shareCount, () => sharedSecret);
   }
 
   const randomShareCount = threshold - 2;
@@ -22491,7 +22529,7 @@ function splitSecret(threshold, shareCount, sharedSecret) {
   let baseShares = new Map();
   let shares = [];
   if (randomShareCount) {
-    shares = Array().generate(
+    shares = Array().slip39Generate(
       randomShareCount, () => randomBytes(sharedSecret.length));
     shares.forEach((item, idx) => {
       baseShares.set(idx, item);
@@ -22525,19 +22563,17 @@ function xor(a, b) {
   if (a.length !== b.length) {
     throw new Error(`Invalid padding in mnemonic or insufficient length of mnemonics (${a.length} or ${b.length})`);
   }
-  return Array().generate(a.length, (i) => a[i] ^ b[i]);
+  return Array().slip39Generate(a.length, (i) => a[i] ^ b[i]);
 }
 
 function getSalt(identifier) {
-  const salt = SALT_STRING.encodeHex();
+  const salt = SALT_STRING.slip39EncodeHex();
   return salt.concat(identifier);
 }
 
 function interpolate(shares, x) {
   let xCoord = new Set(shares.keys());
-  let arr = Array.from(shares.values(), (v) => {
-    v.length;
-  });
+  let arr = Array.from(shares.values(), (v) => v.length);
   let sharesValueLengths = new Set(arr);
 
   if (sharesValueLengths.size !== 1) {
@@ -22545,7 +22581,7 @@ function interpolate(shares, x) {
   }
 
   if (xCoord.has(x)) {
-    shares.forEach((k, v) => {
+    shares.forEach((v, k) => {
       if (k === x) {
         return v;
       }
@@ -22559,7 +22595,7 @@ function interpolate(shares, x) {
     logProd = logProd + LOG_TABLE[k ^ x];
   });
 
-  let results = Array().generate(sharesValueLengths.values().next().value, () => 0);
+  let results = Array().slip39Generate(sharesValueLengths.values().next().value, () => 0);
 
   shares.forEach((v, k) => {
     // The logarithm of the Lagrange basis polynomial evaluated at x.
@@ -22616,18 +22652,18 @@ function rs1024Polymod(data) {
 }
 
 function rs1024CreateChecksum(data) {
-  const values = SALT_STRING.encodeHex()
+  const values = SALT_STRING.slip39EncodeHex()
     .concat(data)
-    .concat(Array().generate(CHECKSUM_WORDS_LENGTH, () => 0));
+    .concat(Array().slip39Generate(CHECKSUM_WORDS_LENGTH, () => 0));
   const polymod = rs1024Polymod(values) ^ 1;
   const result =
-    Array().generate(CHECKSUM_WORDS_LENGTH, (i) => polymod >> 10 * i & 1023).reverse();
+    Array().slip39Generate(CHECKSUM_WORDS_LENGTH, (i) => polymod >> 10 * i & 1023).reverse();
 
   return result;
 }
 
 function rs1024VerifyChecksum(data) {
-  return rs1024Polymod(SALT_STRING.encodeHex().concat(data)) === 1;
+  return rs1024Polymod(SALT_STRING.slip39EncodeHex().concat(data)) === 1;
 }
 
 //
@@ -22649,7 +22685,7 @@ function intFromIndices(indices) {
 function intToIndices(value, length, bits) {
   const mask = BigInt((1 << bits) - 1);
   const result =
-    Array().generate(length, (i) => parseInt(value >> BigInt(i) * BigInt(bits) & mask, 10));
+    Array().slip39Generate(length, (i) => parseInt(value >> BigInt(i) * BigInt(bits) & mask, 10));
   return result.reverse();
 }
 
@@ -22712,11 +22748,11 @@ function combineMnemonics(mnemonics, passphrase = '') {
   const groups = decoded.groups;
 
   if (groups.size < groupThreshold) {
-    throw new Error(`Insufficient number of mnemonic groups (${groups.length}). The required number of groups is ${groupThreshold}.`);
+    throw new Error(`Insufficient number of mnemonic groups (${groups.size}). The required number of groups is ${groupThreshold}.`);
   }
 
   if (groups.size !== groupThreshold) {
-    throw new Error(`Wrong number of mnemonic groups. Expected $groupThreshold groups, but ${groups.length} were provided.`);
+    throw new Error(`Wrong number of mnemonic groups. Expected ${groupThreshold} groups, but ${groups.size} were provided.`);
   }
 
   let allShares = new Map();
