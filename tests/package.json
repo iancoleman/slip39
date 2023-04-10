@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "jasmine": "^3.7.0",
-    "selenium-webdriver": "^3.6.0"
+    "selenium-webdriver": "^4.8.2"
   },
   "license": "MIT"
 }
