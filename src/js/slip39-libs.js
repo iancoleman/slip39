@@ -22703,7 +22703,7 @@ function mnemonicToIndices(mnemonic) {
     throw new Error(`Mnemonic expected to be typeof string with white space separated words. Instead found typeof ${typeof mnemonic}.`);
   }
 
-  const words = mnemonic.toLowerCase().split(' ');
+  const words = mnemonic.toLowerCase().trim().split(/\s+/);
   const result = words.reduce((prev, item) => {
     const index = WORD_LIST_MAP[item];
     if (typeof index === 'undefined') {
